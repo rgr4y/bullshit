@@ -26,10 +26,10 @@ The installer copies scripts, detects available CLIs, and creates default config
 
 ## Dispatch (default)
 
-Run send.sh in background with no arguments — it auto-detects the current session from the most recent JSONL file in `~/.claude/projects/`.
+Run send.sh in background. The session ID for this session is: ${CLAUDE_SESSION_ID}
 
 ```bash
-bash ~/.claude/skills/bullshit/send.sh
+bash ~/.claude/skills/bullshit/send.sh ${CLAUDE_SESSION_ID}
 ```
 
 Run this with `run_in_background: true`. Tell user: "Dispatched to {cli}. I'll get the results when it's done — keep working."
