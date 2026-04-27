@@ -9,20 +9,28 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 CONFIG_FILE="${HOME}/.config/bullshit/config.json"
 
-# --- Session ID ---
+# --- Session ID (optional — auto-detects from most recent JSONL if omitted) ---
 SESSION_ID="${1:-}"
 
 if [[ -z "$SESSION_ID" ]]; then
-    JSONL_FILE=$(find "${HOME}/.claude/projects" -name "*.jsonl" -maxdepth 3 2>/dev/null \
-        | xargs ls -t 2>/dev/null \
-        | head -1)
-    if [[ -z "$JSONL_FILE" ]]; then
-        echo "ERROR: No session ID and no JSONL files found" >&2
+    echo "No session ID provided, auto-detecting..." >&2
+    # Find most recently modified JSONL across all projects
+    JSONL_FILE=""
+    while IFS= read -r f; do
+        JSONL_FILE="$f"
+        break
+    done < <(find "${HOME}/.claude/projects" -name "*.jsonl" -maxdepth 3 -type f 2>/dev/null | xargs ls -t 2>/dev/null)
+
+    if [[ -z "$JSONL_FILE" || ! -f "$JSONL_FILE" ]]; then
+        echo "ERROR: No JSONL session files found in ~/.claude/projects/" >&2
+        echo "Make sure you're running this from an active Claude Code session." >&2
         exit 1
     fi
     SESSION_ID=$(basename "$JSONL_FILE" .jsonl)
+    echo "Detected session: ${SESSION_ID}" >&2
+    echo "File: ${JSONL_FILE}" >&2
 else
-    JSONL_FILE=$(find "${HOME}/.claude/projects" -name "${SESSION_ID}.jsonl" -maxdepth 3 2>/dev/null | head -1)
+    JSONL_FILE=$(find "${HOME}/.claude/projects" -name "${SESSION_ID}.jsonl" -maxdepth 3 -type f 2>/dev/null | head -1)
     if [[ -z "$JSONL_FILE" ]]; then
         echo "ERROR: No JSONL for session ${SESSION_ID}" >&2
         exit 1

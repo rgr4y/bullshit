@@ -26,10 +26,10 @@ The installer copies scripts, detects available CLIs, and creates default config
 
 ## Dispatch (default)
 
-Run send.sh in background. Delivery is automatic — when the other LLM responds, you'll be notified with the output.
+Run send.sh in background with no arguments — it auto-detects the current session from the most recent JSONL file in `~/.claude/projects/`.
 
 ```bash
-bash ~/.claude/skills/bullshit/send.sh "${SESSION_ID}"
+bash ~/.claude/skills/bullshit/send.sh
 ```
 
 Run this with `run_in_background: true`. Tell user: "Dispatched to {cli}. I'll get the results when it's done — keep working."
