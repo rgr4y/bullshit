@@ -50,3 +50,6 @@ logs/
 
 # Claude
 .claude/
+
+# OMX
+.omx/
