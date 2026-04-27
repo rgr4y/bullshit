@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Codex adapter — minimal invocation, --json output for clean parsing.
+# Codex adapter — absolute minimum footprint, --json output.
 #
 # Usage: codex.sh <prompt_file> <output_file>
 
@@ -20,14 +20,21 @@ timeout 300 codex exec \
     --ephemeral \
     --ignore-rules \
     --ignore-user-config \
-    --full-auto \
-    -c "model=\"${MODEL}\"" \
-    --skip-git-repo-check \
     --json \
+    --skip-git-repo-check \
+    -c "model=\"${MODEL}\"" \
+    -c 'web_search="disabled"' \
+    -c 'mcp_servers={}' \
+    -c 'skills.bundled.enabled=false' \
+    -c 'skills.include_instructions=false' \
+    -c 'features.shell_tool=false' \
+    -c 'features.apps=false' \
+    -c 'features.plugins=false' \
+    -c 'features.tool_search=false' \
+    -c 'features.codex_hooks=false' \
     -- "$PROMPT" \
     > "$RAW_JSON" 2>/dev/null
 
-# Extract agent_message text from JSONL events
 python3 -c "
 import json, sys
 texts = []
