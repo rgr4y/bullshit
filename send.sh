@@ -74,8 +74,8 @@ fi
 
 # --- Build prompt ---
 TIMESTAMP=$(date +%s)
-PROMPT_FILE=$(mktemp /tmp/bullshit-prompt-XXXXX.txt)
-OUTPUT_FILE=$(mktemp /tmp/bullshit-raw-XXXXX.txt)
+PROMPT_FILE=$(mktemp /tmp/bullshit-prompt-XXXXXX)
+OUTPUT_FILE=$(mktemp /tmp/bullshit-raw-XXXXXX)
 RESULT_FILE="/tmp/bullshit-${PREFERRED_CLI}-${TIMESTAMP}.json"
 
 trap 'rm -f "$PROMPT_FILE" "$OUTPUT_FILE"' EXIT
