@@ -18,6 +18,7 @@ timeout 300 codex exec \
     --ignore-rules \
     --ignore-user-config \
     --dangerously-bypass-approvals-and-sandbox \
+    --full-auto \
     -c "model=\"${MODEL}\"" \
     --skip-git-repo-check \
     -o "$OUTPUT_FILE" \

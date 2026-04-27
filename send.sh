@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # bullshit send.sh — main orchestrator
-# Called by agent with: bash send.sh <session_id>
+# Called by agent with: bash send.sh <session_id> [context_messages]
 # Designed for run_in_background — stdout IS the delivery mechanism.
 # When this script completes, Claude is automatically notified with output.
 
@@ -43,7 +43,7 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
     cat > "$CONFIG_FILE" <<'CONF'
 {
   "preferred_cli": "codex",
-  "context_messages": 50,
+  "context_messages": 10,
   "max_chars": 50000,
   "timeout_seconds": 300
 }
@@ -51,7 +51,7 @@ CONF
 fi
 
 PREFERRED_CLI=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE'))['preferred_cli'])")
-CONTEXT_MESSAGES=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE')).get('context_messages', 50))")
+CONTEXT_MESSAGES="${2:-$(python3 -c "import json; print(json.load(open('$CONFIG_FILE')).get('context_messages', 10))")}"
 MAX_CHARS=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE')).get('max_chars', 50000))")
 
 # --- Check CLI available ---

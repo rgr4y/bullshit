@@ -29,8 +29,10 @@ The installer copies scripts, detects available CLIs, and creates default config
 Run send.sh in background. The session ID for this session is: ${CLAUDE_SESSION_ID}
 
 ```bash
-bash ~/.claude/skills/bullshit/send.sh ${CLAUDE_SESSION_ID}
+bash ~/.claude/skills/bullshit/send.sh ${CLAUDE_SESSION_ID} [N]
 ```
+
+Second arg = number of messages to review (default: 10). Use more for thorough checks, fewer for quick ones.
 
 Run this with `run_in_background: true`. Tell user: "Dispatched to {cli}. I'll get the results when it's done — keep working."
 
@@ -41,7 +43,7 @@ When background task completes, you receive the fact-check output. Present findi
 Run `bash ~/.claude/skills/bullshit/detect-clis.sh` to show available CLIs. Ask user to pick preferred CLI and context size. Write to `~/.config/bullshit/config.json`:
 
 ```json
-{"preferred_cli": "codex", "context_messages": 50, "max_chars": 50000, "timeout_seconds": 300}
+{"preferred_cli": "codex", "context_messages": 10, "max_chars": 50000, "timeout_seconds": 300}
 ```
 
 ## Sync
