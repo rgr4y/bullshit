@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Codex adapter — uses -o flag for clean output, no preamble parsing needed.
+# Codex adapter — minimal invocation, no plugins/rules/config overhead.
 #
 # Usage: codex.sh <prompt_file> <output_file>
 
@@ -14,7 +14,10 @@ CONFIG_FILE="${HOME}/.config/bullshit/config.json"
 MODEL=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE')).get('codex_model', 'gpt-5.4'))" 2>/dev/null || echo "gpt-5.4")
 
 timeout 300 codex exec \
-    -c 'sandbox_permissions=[]' \
+    --ephemeral \
+    --ignore-rules \
+    --ignore-user-config \
+    --dangerously-bypass-approvals-and-sandbox \
     -c "model=\"${MODEL}\"" \
     --skip-git-repo-check \
     -o "$OUTPUT_FILE" \
