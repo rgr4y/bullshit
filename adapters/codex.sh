@@ -13,6 +13,10 @@ PROMPT=$(cat "$PROMPT_FILE")
 CONFIG_FILE="${HOME}/.config/bullshit/config.json"
 MODEL=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE')).get('codex_model', 'gpt-5.4'))" 2>/dev/null || echo "gpt-5.4")
 
+# Minimal instructions file (created once)
+INSTRUCTIONS="${TMPDIR:-/tmp}/bullshit-instructions.txt"
+[[ -f "$INSTRUCTIONS" ]] || echo "You are a terse fact-checker. Output only the review." > "$INSTRUCTIONS"
+
 RAW_JSON=$(mktemp "${TMPDIR:-/tmp}/bullshit-codex-json.XXXXXX")
 trap 'rm -f "$RAW_JSON"' EXIT
 
@@ -23,15 +27,21 @@ timeout 300 codex exec \
     --json \
     --skip-git-repo-check \
     -c "model=\"${MODEL}\"" \
+    -c "model_instructions_file=\"${INSTRUCTIONS}\"" \
+    -c 'project_doc_max_bytes=0' \
+    -c 'include_permissions_instructions=false' \
+    -c 'include_apps_instructions=false' \
+    -c 'skills.include_instructions=false' \
+    -c 'include_environment_context=false' \
     -c 'web_search="disabled"' \
     -c 'mcp_servers={}' \
     -c 'skills.bundled.enabled=false' \
-    -c 'skills.include_instructions=false' \
     -c 'features.shell_tool=false' \
     -c 'features.apps=false' \
     -c 'features.plugins=false' \
     -c 'features.tool_search=false' \
     -c 'features.codex_hooks=false' \
+    -c 'features.multi_agent=false' \
     -- "$PROMPT" \
     > "$RAW_JSON" 2>/dev/null
 
