@@ -6,8 +6,18 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-CONFIG_FILE="${HOME}/.config/bullshit/config.json"
+# --- Constants ---
+readonly SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+readonly CONFIG_FILE="${HOME}/.config/bullshit/config.json"
+readonly PROJECTS_DIR="${HOME}/.claude/projects"
+readonly TMP_PREFIX="${TMPDIR:-/tmp}/bullshit"
+readonly DEFAULT_CLI="codex"
+readonly DEFAULT_CONTEXT_MESSAGES=10
+readonly DEFAULT_MAX_CHARS=50000
+readonly DEFAULT_TIMEOUT=300
+readonly NOTIFY_TITLE="bullshit"
+
+cfg() { python3 -c "import json; print(json.load(open('${CONFIG_FILE}')).get('$1', '$2'))"; }
 
 # --- Session ID (optional — auto-detects from most recent JSONL if omitted) ---
 SESSION_ID="${1:-}"
@@ -19,10 +29,10 @@ if [[ -z "$SESSION_ID" ]]; then
     while IFS= read -r f; do
         JSONL_FILE="$f"
         break
-    done < <(find "${HOME}/.claude/projects" -name "*.jsonl" -maxdepth 3 -type f 2>/dev/null | xargs ls -t 2>/dev/null)
+    done < <(find "${PROJECTS_DIR}" -name "*.jsonl" -maxdepth 3 -type f 2>/dev/null | xargs ls -t 2>/dev/null)
 
     if [[ -z "$JSONL_FILE" || ! -f "$JSONL_FILE" ]]; then
-        echo "ERROR: No JSONL session files found in ~/.claude/projects/" >&2
+        echo "ERROR: No JSONL session files found in ${PROJECTS_DIR}/" >&2
         echo "Make sure you're running this from an active Claude Code session." >&2
         exit 1
     fi
@@ -30,7 +40,7 @@ if [[ -z "$SESSION_ID" ]]; then
     echo "Detected session: ${SESSION_ID}" >&2
     echo "File: ${JSONL_FILE}" >&2
 else
-    JSONL_FILE=$(find "${HOME}/.claude/projects" -name "${SESSION_ID}.jsonl" -maxdepth 3 -type f 2>/dev/null | head -1)
+    JSONL_FILE=$(find "${PROJECTS_DIR}" -name "${SESSION_ID}.jsonl" -maxdepth 3 -type f 2>/dev/null | head -1)
     if [[ -z "$JSONL_FILE" ]]; then
         echo "ERROR: No JSONL for session ${SESSION_ID}" >&2
         exit 1
@@ -40,19 +50,19 @@ fi
 # --- Config (create default if missing) ---
 if [[ ! -f "$CONFIG_FILE" ]]; then
     mkdir -p "$(dirname "$CONFIG_FILE")"
-    cat > "$CONFIG_FILE" <<'CONF'
+    cat > "$CONFIG_FILE" <<CONF
 {
-  "preferred_cli": "codex",
-  "context_messages": 10,
-  "max_chars": 50000,
-  "timeout_seconds": 300
+  "preferred_cli": "${DEFAULT_CLI}",
+  "context_messages": ${DEFAULT_CONTEXT_MESSAGES},
+  "max_chars": ${DEFAULT_MAX_CHARS},
+  "timeout_seconds": ${DEFAULT_TIMEOUT}
 }
 CONF
 fi
 
-PREFERRED_CLI=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE'))['preferred_cli'])")
-CONTEXT_MESSAGES="${2:-$(python3 -c "import json; print(json.load(open('$CONFIG_FILE')).get('context_messages', 10))")}"
-MAX_CHARS=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE')).get('max_chars', 50000))")
+PREFERRED_CLI=$(cfg preferred_cli "${DEFAULT_CLI}")
+CONTEXT_MESSAGES="${2:-$(cfg context_messages "${DEFAULT_CONTEXT_MESSAGES}")}"
+MAX_CHARS=$(cfg max_chars "${DEFAULT_MAX_CHARS}")
 
 # --- Check CLI available ---
 AVAILABLE=$("${SCRIPT_DIR}/detect-clis.sh" 2>/dev/null || echo '{"available":{}}')
@@ -74,9 +84,9 @@ fi
 
 # --- Build prompt ---
 TIMESTAMP=$(date +%s)
-PROMPT_FILE=$(mktemp "${TMPDIR:-/tmp}/bullshit-prompt.XXXXXX")
-OUTPUT_FILE=$(mktemp "${TMPDIR:-/tmp}/bullshit-raw.XXXXXX")
-RESULT_FILE="/tmp/bullshit-${PREFERRED_CLI}-${TIMESTAMP}.json"
+PROMPT_FILE=$(mktemp "${TMP_PREFIX}-prompt.XXXXXX")
+OUTPUT_FILE=$(mktemp "${TMP_PREFIX}-raw.XXXXXX")
+RESULT_FILE="${TMP_PREFIX}-${PREFERRED_CLI}-${TIMESTAMP}.json"
 
 trap 'rm -f "$PROMPT_FILE" "$OUTPUT_FILE"' EXIT
 
@@ -121,7 +131,7 @@ START_TIME=$(date +%s)
 
 if ! "$ADAPTER" "$PROMPT_FILE" "$OUTPUT_FILE"; then
     echo "ERROR: ${PREFERRED_CLI} adapter failed" >&2
-    terminal-notifier -title "bullshit" -subtitle "${PREFERRED_CLI} failed" -message "Adapter error" -sound Basso 2>/dev/null || true
+    terminal-notifier -title "${NOTIFY_TITLE}" -subtitle "${PREFERRED_CLI} failed" -message "Adapter error" -sound Basso 2>/dev/null || true
     exit 1
 fi
 
@@ -153,4 +163,4 @@ echo ""
 echo "Result also saved: ${RESULT_FILE}"
 
 # --- Notify (fallback for idle sessions) ---
-terminal-notifier -title "bullshit" -subtitle "${PREFERRED_CLI} review ready" -message "Check your Claude session" -sound Glass 2>/dev/null || true
+terminal-notifier -title "${NOTIFY_TITLE}" -subtitle "${PREFERRED_CLI} review ready" -message "Check your Claude session" -sound Glass 2>/dev/null || true

@@ -8,19 +8,17 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SKILL_DIR="${HOME}/.claude/skills/bullshit"
-ALIAS_DIR="${HOME}/.claude/skills/bs"
 CONFIG_FILE="${HOME}/.config/bullshit/config.json"
 
 echo "Installing bullshit skill..."
 
 # Copy skill + scripts
-mkdir -p "$SKILL_DIR/scripts/adapters" "$ALIAS_DIR"
+mkdir -p "$SKILL_DIR/scripts/adapters"
 
 cp "$SCRIPT_DIR/skills/bullshit/SKILL.md" "$SKILL_DIR/SKILL.md"
 cp "$SCRIPT_DIR/skills/bullshit/scripts/"*.sh "$SKILL_DIR/scripts/"
 cp "$SCRIPT_DIR/skills/bullshit/scripts/"*.py "$SKILL_DIR/scripts/"
 cp "$SCRIPT_DIR/skills/bullshit/scripts/adapters/"* "$SKILL_DIR/scripts/adapters/"
-cp "$SCRIPT_DIR/skills/bs/SKILL.md" "$ALIAS_DIR/SKILL.md"
 
 chmod +x "$SKILL_DIR/scripts/"*.sh "$SKILL_DIR/scripts/"*.py "$SKILL_DIR/scripts/adapters/"*
 
@@ -35,7 +33,7 @@ import sys, json
 d = json.load(sys.stdin)
 clis = d.get('available', {})
 if not clis:
-    print('  No LLM CLIs found. Install codex, gemini, or aider.')
+    print('  No LLM CLIs found. Drop an adapter in scripts/adapters/ or install codex/copilot/gemini/aider.')
 else:
     for name, info in clis.items():
         print(f'  {name}: {info.get(\"version\", \"unknown\")} ({info.get(\"path\", \"?\")})')
@@ -48,17 +46,12 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
 import sys, json
 d = json.load(sys.stdin)
 clis = list(d.get('available', {}).keys())
-for pref in ['codex', 'gemini', 'aider']:
-    if pref in clis:
-        print(pref)
-        break
-else:
-    print(clis[0] if clis else 'codex')
+print(clis[0] if clis else 'codex')
 " 2>/dev/null || echo "codex")
     cat > "$CONFIG_FILE" <<CONF
 {
   "preferred_cli": "${DEFAULT_CLI}",
-  "context_messages": 50,
+  "context_messages": 10,
   "max_chars": 50000,
   "timeout_seconds": 300
 }

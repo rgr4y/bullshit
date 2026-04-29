@@ -1,23 +1,35 @@
 #!/usr/bin/env bash
-# Codex adapter — absolute minimum footprint, --json output.
-#
-# Usage: codex.sh <prompt_file> <output_file>
+# Adapter: codex
+# Contract: adapters/<name>.sh where <name> matches the CLI binary
+#   --probe         → exit 0 + JSON if available, exit 1 if not
+#   <prompt> <out>  → run fact-check, write result to <out>
 
 set -euo pipefail
 
+readonly CONFIG_FILE="${HOME}/.config/bullshit/config.json"
+readonly DEFAULT_MODEL="gpt-5.4"
+readonly TMP_PREFIX="${TMPDIR:-/tmp}/bullshit"
+
+# --- Probe mode ---
+if [[ "${1:-}" == "--probe" ]]; then
+    BIN=$(command -v codex 2>/dev/null) || exit 1
+    VER=$(codex --version 2>/dev/null | head -1 || echo "unknown")
+    echo "{\"binary\":\"codex\",\"path\":\"${BIN}\",\"version\":\"${VER}\",\"invoke\":\"codex exec\"}"
+    exit 0
+fi
+
+# --- Run mode ---
 PROMPT_FILE="$1"
 OUTPUT_FILE="$2"
 
 PROMPT=$(cat "$PROMPT_FILE")
 
-CONFIG_FILE="${HOME}/.config/bullshit/config.json"
-MODEL=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE')).get('codex_model', 'gpt-5.4'))" 2>/dev/null || echo "gpt-5.4")
+MODEL=$(python3 -c "import json; print(json.load(open('${CONFIG_FILE}')).get('codex_model', '${DEFAULT_MODEL}'))" 2>/dev/null || echo "${DEFAULT_MODEL}")
 
-# Minimal instructions file (created once)
-INSTRUCTIONS="${TMPDIR:-/tmp}/bullshit-instructions.txt"
+INSTRUCTIONS="${TMP_PREFIX}-instructions.txt"
 [[ -f "$INSTRUCTIONS" ]] || echo "You are a terse fact-checker. Output only the review." > "$INSTRUCTIONS"
 
-RAW_JSON=$(mktemp "${TMPDIR:-/tmp}/bullshit-codex-json.XXXXXX")
+RAW_JSON=$(mktemp "${TMP_PREFIX}-codex-json.XXXXXX")
 trap 'rm -f "$RAW_JSON"' EXIT
 
 timeout 300 codex exec \
@@ -46,7 +58,7 @@ timeout 300 codex exec \
     > "$RAW_JSON" 2>/dev/null
 
 python3 -c "
-import json, sys
+import json
 texts = []
 for line in open('$RAW_JSON'):
     line = line.strip()
@@ -64,5 +76,3 @@ for line in open('$RAW_JSON'):
         pass
 print('\n\n'.join(texts))
 " > "$OUTPUT_FILE"
-
-exit $?
