@@ -1,16 +1,32 @@
-# bullshit
+# skill-bullshit
 
-Get a second opinion from another LLM on what Claude just told you.
+Get a second opinion from another LLM on what your AI assistant just told you.
 
-Dispatches your conversation to codex, gemini, or aider for fact-checking. Results delivered back automatically via background task.
+Dispatches your conversation to codex, gemini, or aider for independent fact-checking. Results delivered back automatically via background task.
 
 ## Install
 
 ```bash
-git clone <this-repo> && cd bullshit && bash install.sh
+npx skills add rgr4y/bullshit
 ```
 
-Requires at least one of: `codex`, `gemini`, `aider` (or `sgpt`).
+Or global:
+
+```bash
+npx skills add rgr4y/bullshit -g
+```
+
+### Manual
+
+```bash
+git clone https://github.com/rgr4y/bullshit.git
+cd skill-bullshit
+bash install.sh
+```
+
+## Requirements
+
+At least one of: [`codex`](https://github.com/openai/codex), [`gemini`](https://github.com/google-gemini/gemini-cli), [`aider`](https://github.com/paul-gauthier/aider)
 
 ## Usage
 
@@ -28,7 +44,7 @@ In Claude Code:
 1. You say `/bullshit`
 2. Claude runs `send.sh` in background
 3. Script reads your session JSONL directly (no agent summary = no bias)
-4. Sends conversation to codex/gemini with a fact-checking prompt
+4. Sends conversation to codex/gemini/aider with a fact-checking prompt
 5. When done, Claude gets notified automatically and presents findings
 6. You keep working the whole time
 
@@ -44,3 +60,7 @@ In Claude Code:
   "timeout_seconds": 300
 }
 ```
+
+## License
+
+MIT

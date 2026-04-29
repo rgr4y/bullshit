@@ -5,15 +5,12 @@ description: Use when user invokes /bullshit or /bs — dispatches another LLM C
 
 # bullshit — Cross-LLM Fact Checker
 
-## Install
+Dispatches your conversation to another LLM (codex, gemini, aider) for independent fact-checking.
 
-If `~/.claude/skills/bullshit/send.sh` does not exist, run the installer:
+## Paths
 
-```bash
-bash /path/to/this/repo/install.sh
-```
-
-The installer copies scripts, detects available CLIs, and creates default config. Follow its output.
+All scripts live in `scripts/` relative to this skill's base directory.
+Use the base directory shown when this skill loaded to construct absolute paths.
 
 ## Commands
 
@@ -29,8 +26,10 @@ The installer copies scripts, detects available CLIs, and creates default config
 Run send.sh in background. The session ID for this session is: ${CLAUDE_SESSION_ID}
 
 ```bash
-bash ~/.claude/skills/bullshit/send.sh ${CLAUDE_SESSION_ID} [N]
+bash "${SKILL_DIR}/scripts/send.sh" ${CLAUDE_SESSION_ID} [N]
 ```
+
+Where `${SKILL_DIR}` = this skill's base directory.
 
 Second arg = number of messages to review (default: 10). Use more for thorough checks, fewer for quick ones.
 
@@ -40,7 +39,7 @@ When background task completes, you receive the fact-check output. Present findi
 
 ## Setup
 
-Run `bash ~/.claude/skills/bullshit/detect-clis.sh` to show available CLIs. Ask user to pick preferred CLI and context size. Write to `~/.config/bullshit/config.json`:
+Run `bash "${SKILL_DIR}/scripts/detect-clis.sh"` to show available CLIs. Ask user to pick preferred CLI and context size. Write to `~/.config/bullshit/config.json`:
 
 ```json
 {"preferred_cli": "codex", "context_messages": 10, "max_chars": 50000, "timeout_seconds": 300}
@@ -49,7 +48,7 @@ Run `bash ~/.claude/skills/bullshit/detect-clis.sh` to show available CLIs. Ask 
 ## Sync
 
 ```bash
-bash ~/.claude/skills/bullshit/detect-clis.sh --bust-cache
+bash "${SKILL_DIR}/scripts/detect-clis.sh" --bust-cache
 ```
 
 ## Read (fallback)
